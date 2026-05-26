@@ -46,20 +46,10 @@ if __name__ == "__main__":
 
     print("Unique bad SMILES:", len(unique_bad))
 
-    iters = len(unique_bad)//1000 + 1
+    output_file = "input.txt"
 
-    contents = [[] for _ in range(iters)]
-
-    for i, row in unique_bad.iterrows():
-        smiles = row["smiles"]
-        contents[i//1000].append(smiles)
-
-    for i in range(iters):
-    
-        # write output
-        output_file = "input" + str(i) + ".txt"
-
-        with open(output_file, "w") as f:
-            for smiles in contents[i]:
-                f.write(f"{smiles}\n")
-        print(f"Wrote: {output_file}")
+    with open(output_file, "w") as f:
+        for i, row in unique_bad.iterrows():
+            smiles = row["smiles"]
+            f.write(f"{smiles}\n")
+    print(f"Wrote: {output_file}")
