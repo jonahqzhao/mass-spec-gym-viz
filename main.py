@@ -10,7 +10,7 @@ from ui.main_window import MainWindow
 
 
 if __name__ == "__main__":
-    df = pd.read_pickle("./df_peaks_and_classes.pkl")
+    df = pd.read_pickle("./df_peaks_and_classes_fixed.pkl")
 
     grouped = (
         df

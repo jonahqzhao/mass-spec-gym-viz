@@ -1,66 +1,44 @@
 import pandas as pd
 import numpy as np
 
-print("Loading dataframe...")
+def is_bad_row(row):
+    c1, c2, c3, c4 = row["class1"], row["class2"], row["class3"], row["class4"]
 
-df = pd.read_pickle("./df_peaks_and_classes.pkl")
+    return (c1 == None and c2 == None and c3 == None and c4 == None)
 
-grouped = (
-    df
-    .groupby("inchikey")
-    .agg({
-        "mzs": list,
-        "intensities": list,
-        "collision_energy": list,
-        "instrument_type": list,
-        "adduct": list,
-        "precursor_mz": list,
-        "precursor_formula": list,
-        "peak_formula_arrays": list,
-        "ppm_errors": list,
-        "smiles": "first",
-        "formula": "first",
-        "parent_mass": "first",
-        "fold": "first",
-        "class1": "first",
-        "class2": "first",
-        "class3": "first",
-        "class4": "first",
-        "simulation_challenge": "first",
-    })
-    .reset_index()
-)
+if __name__ == "__main__":
 
-print(f"\nGrouped molecules: {len(grouped)}\n")
+    df = pd.read_pickle("./df_peaks_and_classes_fixed.pkl")
 
-no_spectra = 0
-empty_examples = []
+    print("Loaded:", df.shape)
 
-for _, row in grouped.iterrows():
-    mzs = row["mzs"]
+    # find bad molecules
+    bad_mask = df.apply(is_bad_row, axis=1)
 
-    # handle different possible structures safely
-    if mzs is None:
-        count = 0
-    elif isinstance(mzs, list):
-        count = len(mzs)
-    else:
-        count = 1  # fallback if malformed
+    bad_df = df[bad_mask].copy()
+    good_df = df[~bad_mask].copy()
 
-    if count == 0:
-        no_spectra += 1
-        if len(empty_examples) < 10:
-            empty_examples.append(row["inchikey"])
+    print("Bad molecules:", len(bad_df))
+    print("Good molecules:", len(good_df))
 
-print("\n================ SPECTRA COVERAGE =================\n")
+    sample = bad_df.sample(min(10, len(bad_df)), random_state=42)
 
-print(f"Total molecules: {len(grouped)}")
-print(f"Molecules with NO spectra: {no_spectra}")
-print(f"Fraction missing spectra: {no_spectra / len(grouped):.4f}")
+    for i, row in sample.iterrows():
+        print("\n--- MOLECULE ---")
+        print("inchikey:", row["inchikey"])
+        print("smiles:", row["smiles"])
+        print("class1:", row["class1"])
+        print("class2:", row["class2"])
+        print("class3:", row["class3"])
+        print("class4:", row["class4"])
 
-print("\n================ EXAMPLES (NO SPECTRA) =================\n")
+    # re-annotate ONLY bad ones
+    #bad_df = reannotate_unique_smiles(bad_df)
 
-for ik in empty_examples:
-    print(ik)
+    # merge back
+    #df_fixed = pd.concat([good_df, bad_df], ignore_index=True)
 
-print("\nDone.")
+    # save
+    #df_fixed.to_pickle("./df_peaks_and_classes_fixed.pkl")
+
+    print("Done.")
